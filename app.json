@@ -2,10 +2,16 @@
   "expo": {
     "name": "TAMIL_SANGAMAM",
     "slug": "TAMIL_SANGAMAM",
+    "scheme": "tamil-sangamam",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#4A1218"
+    },
     "ios": {
       "supportsTablet": true
     },
