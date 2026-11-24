@@ -6,3 +6,4 @@ export * from "./KolamBorder";
 export * from "./LampGlow";
 export * from "./InkIcon";
 export * from "./ScreenHeader";
+export * from "./numerals";

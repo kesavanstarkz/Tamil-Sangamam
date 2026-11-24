@@ -23,6 +23,12 @@ function write(key: string, value: string): void {
 }
 
 export const progressStore = {
+  getDaily(date: string): number {
+    return Number(read(`daily.${date}.completed`) ?? "0");
+  },
+  setDaily(date: string, completed: number): void {
+    write(`daily.${date}.completed`, String(completed));
+  },
   getStars(levelId: number): number {
     return Number(read(`stars.${levelId}`) ?? "0");
   },
@@ -72,4 +78,19 @@ export const settingsStore = {
   setHaptics(enabled: boolean): void {
     write("settings.haptics", String(enabled));
   },
+  getTamilNumerals(): boolean {
+    return read("settings.tamilNumerals") !== "false";
+  },
+  setTamilNumerals(enabled: boolean): void {
+    write("settings.tamilNumerals", String(enabled));
+  },
+  migrate(): void {
+    if (read("schemaVersion") !== "1") {
+      write("schemaVersion", "1");
+      const endlessBest = read("endless.best");
+      if (endlessBest) write("build.endless.best", endlessBest);
+    }
+  },
 };
+
+settingsStore.migrate();

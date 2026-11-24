@@ -1,0 +1,1 @@
+- Record spoken Tamil audio for 246 generated Tamil letter ids: 12 உயிர், 18 pulli மெய், and 216 உயிர்மெய். Filenames are expected to match the glyph id under `assets/tracing/glyphs.json`.

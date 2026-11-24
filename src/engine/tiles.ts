@@ -61,8 +61,7 @@ export function splitWord(word: string): Tile[] {
     }
 
     if (!isNativeMei(character)) {
-      index += 1;
-      continue;
+      throw new Error(`Unsupported character in Tamil word: ${character}`);
     }
 
     if (characters[index + 1] === PULLI) {
@@ -107,6 +106,12 @@ export function tileEquals(a: Tile, b: Tile): boolean {
     return a.base === b.base && a.uyirId === b.uyirId;
   }
   return false;
+}
+
+export function tileKey(tile: Tile): string {
+  if (tile.kind === "mei") return `m:${tile.base}`;
+  if (tile.kind === "uyir") return `u:${tile.id}`;
+  return `v:${tile.base}:${tile.uyirId}`;
 }
 
 export function findTileIndex(pool: Tile[], tile: Tile): number {

@@ -1,0 +1,10 @@
+- Home: open each of the five menu items; each Tamil destination title and back action work.
+- சொல் உருவாக்கம்: open a chapter, place 72 dp tiles, solve one level, and confirm stars persist.
+- இன்றைய சவால்: open at a mid-day state, confirm one of five lamps is lit and leave/resume preserves it.
+- விடுபட்ட எழுத்து: tap a wrong large tile, confirm dim/shake/mistake; tap the valid tile and confirm lamp and அடுத்தது.
+- கலைந்த சொல்: tap four tiles into slots, tap a filled slot to return it, use பின்செல், and confirm wrong clears after 600 ms.
+- எழுத்துக் கூடம்: select one mei and one uyir, confirm split succeeds; at stage 3 confirm classify buttons.
+- அந்தாதி: confirm four candidate cards are visible before answering and the chain scrolls horizontally.
+- சொல் தேடல்: drag a straight 5x5 selection and tap first/last on another word; confirm automatic matching and progress.
+- Settings: toggle numerals, English, sound, haptics, hints reset, and confirm credits are visible.
+- எழுத்துப் பயிற்சி: open உயிர், மெய் and உயிர்மெய் where available, trace one letter, use மீண்டும், and confirm stars.

@@ -42,6 +42,10 @@ interface LevelGameProps {
   level: (typeof levels)[number];
   kidsMode?: boolean;
   showHeader?: boolean;
+  headerTitle?: string;
+  progressLabel?: string;
+  progressError?: string;
+  recordStars?: boolean;
   onNext?: () => void;
 }
 
@@ -49,6 +53,10 @@ export function LevelGame({
   level,
   kidsMode = false,
   showHeader = true,
+  headerTitle,
+  progressLabel,
+  progressError,
+  recordStars = true,
   onNext,
 }: LevelGameProps) {
   const [game, setGame] = useState<GameState>(() => initLevel(level, { kidsMode }));
@@ -64,11 +72,11 @@ export function LevelGame({
   }
 
   React.useEffect(() => {
-    if (!won || kidsMode) return;
+    if (!won || kidsMode || !recordStars) return;
     const hintsUsed = 3 - game.hintsLeft;
     const totalErrors = game.mistakes + hintsUsed;
     progressStore.setStars(level.id, totalErrors === 0 ? 3 : totalErrors <= 2 ? 2 : 1);
-  }, [game.hintsLeft, game.mistakes, kidsMode, level.id, won]);
+  }, [game.hintsLeft, game.mistakes, kidsMode, level.id, recordStars, won]);
 
   async function onTilePress(tileId: string): Promise<void> {
     await playTap(settingsStore.getHaptics());
@@ -142,7 +150,9 @@ export function LevelGame({
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.content}>
-      {showHeader ? <ScreenHeader title={kidsMode ? "குழந்தைகள் முறை" : `நிலை ${level.id}`} /> : null}
+      {showHeader ? <ScreenHeader title={headerTitle ?? (kidsMode ? "குழந்தைகள் முறை" : `நிலை ${level.id}`)} /> : null}
+      {progressLabel ? <Text style={styles.progressLabel}>{progressLabel}</Text> : null}
+      {progressError ? <Text accessibilityRole="alert" style={styles.progressError}>{progressError}</Text> : null}
       {!showHeader ? <Text style={styles.title}>{level.word}</Text> : null}
 
       {kidsMode ? (
@@ -286,6 +296,8 @@ const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.templeMaroon },
   content: { alignItems: "center", padding: spacing.md, minHeight: 700 },
   title: { color: colors.sandalCream, fontSize: typography.heading, fontWeight: "800" },
+  progressLabel: { color: colors.palmLeaf, fontSize: typography.label, marginTop: spacing.xs },
+  progressError: { color: colors.turmeric, fontSize: typography.label, textAlign: "center", marginTop: spacing.xs },
   word: { color: colors.turmeric, fontSize: typography.title, fontWeight: "800", marginTop: spacing.sm },
   slots: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", marginVertical: spacing.md },
   board: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", maxWidth: 390, marginTop: spacing.md },

@@ -1,7 +1,8 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
-import Svg, { Path } from "react-native-svg";
+import Svg, { Circle, Path } from "react-native-svg";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "./tokens";
 import { typography } from "./typography";
 
@@ -11,8 +12,9 @@ interface Props {
 }
 
 export function ScreenHeader({ title, back = true }: Props) {
+  const insets = useSafeAreaInsets();
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, { paddingTop: insets.top }]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={back ? "திரும்பு" : "முகப்பு"}
@@ -21,7 +23,7 @@ export function ScreenHeader({ title, back = true }: Props) {
       >
         <Text style={styles.back}>{back ? "‹" : "⌂"}</Text>
       </Pressable>
-      <Text numberOfLines={1} style={styles.title}>
+      <Text numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.82} style={styles.title}>
         {title}
       </Text>
       <Pressable
@@ -31,8 +33,9 @@ export function ScreenHeader({ title, back = true }: Props) {
         style={styles.action}
       >
         <Svg width={25} height={25} viewBox="0 0 24 24">
+          <Circle cx={12} cy={12} r={3} fill="none" stroke={colors.sandalCream} strokeWidth={1.8} />
           <Path
-            d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7m10 10 2.1 2.1m0-14.2L17 7M7 17l-2.1 2.1"
+            d="M9.7 2h4.6l.7 2.4 2.1 1.2 2.4-.8 2.3 4-1.7 1.8.1 2.4 1.6 1.9-2.3 4-2.4-.8-2.1 1.2-.7 2.7H9.7l-.7-2.7-2.1-1.2-2.4.8-2.3-4 1.6-1.9.1-2.4-1.7-1.8 2.3-4 2.4.8 2.1-1.2Z"
             stroke={colors.sandalCream}
             strokeWidth={1.8}
             strokeLinecap="round"

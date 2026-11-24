@@ -9,16 +9,18 @@ export default function Home() {
       <ScreenHeader title="தமிழ் சங்கமம்" back={false} />
       <KolamBorder width={360} />
       <LampGlow lit />
-      <Text style={styles.subtitle}>சொற்களை உருவாக்குங்கள்</Text>
       <View style={styles.buttons}>
         <Pressable style={styles.primary} onPress={() => router.push("/chapters")}>
           <Text style={styles.primaryText}>சொல் உருவாக்கம்</Text>
         </Pressable>
         <Pressable style={styles.secondary} onPress={() => router.push("/daily")}>
-          <Text style={styles.secondaryText}>இன்றைய சொல்</Text>
+          <Text style={styles.secondaryText}>இன்றைய சவால்</Text>
         </Pressable>
-        <Pressable style={styles.secondary} onPress={() => router.push("/kids")}>
-          <Text style={styles.secondaryText}>குழந்தைகள் முறை</Text>
+        <Pressable style={styles.secondary} onPress={() => router.push("/games")}>
+          <Text style={styles.secondaryText}>விளையாட்டுகள்</Text>
+        </Pressable>
+        <Pressable style={styles.secondary} onPress={() => router.push("/tracing")}>
+          <Text style={styles.secondaryText}>எழுத்துப் பயிற்சி</Text>
         </Pressable>
         <Pressable style={styles.secondary} onPress={() => router.push("/settings")}>
           <Text style={styles.secondaryText}>அமைப்புகள்</Text>
