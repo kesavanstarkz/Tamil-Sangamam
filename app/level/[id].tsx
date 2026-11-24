@@ -25,6 +25,7 @@ import {
 import type { GameHint, GameState } from "../../src/engine";
 import { playMergeSound, playTap, playTileSound } from "../../src/audio/soundManager";
 import { progressStore, settingsStore } from "../../src/state/store";
+import { getWordMeaning } from "../../src/content/word-meanings";
 import {
   CarvedSlot,
   colors,
@@ -147,6 +148,7 @@ export function LevelGame({
   }
 
   const deadEnd = isDeadEnd(game);
+  const meaning = getWordMeaning(level.word);
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.content}>
@@ -201,6 +203,10 @@ export function LevelGame({
         <View style={styles.success}>
           <KolamBorder width={300} chapter={level.chapter} />
           <Text style={styles.successText}>வெற்றி!</Text>
+          <View style={styles.meaningCard}>
+            <Text style={styles.meaningTitle}>பொருள்: {meaning.meaning}</Text>
+            <Text style={styles.meaningText}>எடுத்துக்காட்டு: {meaning.example}</Text>
+          </View>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="அடுத்த நிலை"
@@ -316,4 +322,7 @@ const styles = StyleSheet.create({
   pictureClue: { alignItems: "center", marginTop: spacing.sm },
   pictureFrame: { width: 110, height: 82, borderWidth: 1, borderColor: colors.turmeric, borderRadius: 8, alignItems: "center", justifyContent: "center", backgroundColor: colors.palmLeaf },
   pictureText: { color: colors.sandalCream, fontSize: typography.label, marginTop: spacing.xs },
+  meaningCard: { maxWidth: 360, borderRadius: 8, padding: spacing.md, backgroundColor: colors.palmLeaf, marginTop: spacing.sm },
+  meaningTitle: { color: colors.ink, fontSize: typography.body, fontWeight: "800", textAlign: "center" },
+  meaningText: { color: colors.ink, fontSize: typography.label, lineHeight: 26, marginTop: spacing.xs, textAlign: "center" },
 });

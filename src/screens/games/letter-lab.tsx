@@ -18,13 +18,21 @@ function questionForStage(stage: number): LetterLabQuestion {
     : createSplitQuestion(NATIVE_MEIS[(stage - 1) % NATIVE_MEIS.length], (stage - 1) % VOWEL_NAMES.length);
 }
 
-export function LetterLabGame({ seed = 0 }: { seed?: number }) {
+export function LetterLabGame({ seed = 0, onComplete }: { seed?: number; onComplete?: () => void }) {
   const mode = "letter-lab";
   const { stage, streak, advance, ready, error: progressError } = useModeProgress(mode);
   const [game, setGame] = React.useState<LetterLabState>();
   const [selectedMei, setSelectedMei] = React.useState<string>();
   const [selectedUyir, setSelectedUyir] = React.useState<string>();
   const activeGame = game ?? { question: questionForStage(stage + seed), solved: false };
+  const correctMei = activeGame.question.kind === "split" ? activeGame.question.mei : undefined;
+  const correctUyir = activeGame.question.kind === "split" ? activeGame.question.uyir : undefined;
+  const meiOptions = stage < 6
+    ? [...new Set([correctMei, ...NATIVE_MEIS.slice(0, 6).map((base) => `${base}்`)].filter((value): value is string => Boolean(value)))]
+    : NATIVE_MEIS.map((base) => `${base}்`);
+  const uyirOptions = stage < 6
+    ? [...new Set([correctUyir, ...VOWEL_NAMES.slice(0, 6)].filter((value): value is string => Boolean(value)))]
+    : [...VOWEL_NAMES];
   function answerSplit(mei: string, uyir: string) {
     setGame((current) => letterLabReducer(current ?? activeGame, { type: "answer-split", mei, uyir }));
   }
@@ -33,7 +41,7 @@ export function LetterLabGame({ seed = 0 }: { seed?: number }) {
   }
   if (!ready) return <GameLoading error={progressError} />;
   return (
-    <GameFrame mode={mode} stage={stage} streak={streak} solved={activeGame.solved} error={progressError} onNext={() => {
+    <GameFrame mode={mode} stage={stage} streak={streak} solved={activeGame.solved} error={progressError} onComplete={onComplete} onNext={() => {
       void advance().then((saved) => {
         if (!saved) return;
         setGame(undefined);
@@ -48,8 +56,7 @@ export function LetterLabGame({ seed = 0 }: { seed?: number }) {
       {activeGame.question.kind === "split" ? (
         <View style={styles.options}>
           <Text style={styles.label}>மெய்</Text>
-          {(stage < 6 ? NATIVE_MEIS.slice(0, 6) : NATIVE_MEIS).map((base) => {
-            const mei = `${base}்`;
+          {meiOptions.map((mei) => {
             return (
               <ChoiceButton
                 key={mei}
@@ -57,6 +64,10 @@ export function LetterLabGame({ seed = 0 }: { seed?: number }) {
                 testID={`lab-mei-${mei}`}
                 selected={selectedMei === mei}
                 onPress={() => {
+                  if (selectedMei === mei) {
+                    setSelectedMei(undefined);
+                    return;
+                  }
                   setSelectedMei(mei);
                   if (selectedUyir) answerSplit(mei, selectedUyir);
                 }}
@@ -64,13 +75,17 @@ export function LetterLabGame({ seed = 0 }: { seed?: number }) {
             );
           })}
           <Text style={styles.label}>உயிர்</Text>
-          {(stage < 6 ? VOWEL_NAMES.slice(0, 6) : VOWEL_NAMES).map((uyir) => (
+          {uyirOptions.map((uyir) => (
             <ChoiceButton
               key={uyir}
               label={uyir}
               testID={`lab-uyir-${uyir}`}
               selected={selectedUyir === uyir}
               onPress={() => {
+                if (selectedUyir === uyir) {
+                  setSelectedUyir(undefined);
+                  return;
+                }
                 setSelectedUyir(uyir);
                 if (selectedMei) answerSplit(selectedMei, uyir);
               }}
@@ -84,6 +99,7 @@ export function LetterLabGame({ seed = 0 }: { seed?: number }) {
           ))}
         </View>
       )}
+      {activeGame.wrong ? <Text style={styles.retry}>மீண்டும் முயற்சி செய்யுங்கள்</Text> : null}
     </GameFrame>
   );
 }
@@ -105,4 +121,5 @@ const styles = StyleSheet.create({
   label: { width: "100%", color: colors.palmLeaf, fontSize: typography.label, textAlign: "center", marginTop: spacing.sm },
   loading: { flex: 1, backgroundColor: colors.templeMaroon, alignItems: "center", justifyContent: "center" },
   loadingText: { color: colors.sandalCream, fontSize: typography.heading, textAlign: "center" },
+  retry: { color: colors.palmLeaf, fontSize: typography.body, marginTop: spacing.sm },
 });

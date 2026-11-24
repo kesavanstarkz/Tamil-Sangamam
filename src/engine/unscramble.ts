@@ -11,10 +11,13 @@ export interface UnscramblePuzzle {
 export interface UnscrambleState extends UnscramblePuzzle {
   chosen: string[];
   solved: boolean;
+  wrong?: boolean;
+  mistakes?: number;
 }
 
 export type UnscrambleAction =
   | { type: "pick"; index: number }
+  | { type: "remove"; position: number }
   | { type: "undo" }
   | { type: "reset" };
 
@@ -35,6 +38,9 @@ export function createUnscramblePuzzle(words: readonly WordEntry[], seed: number
       return ((current ^ (current >>> 14)) >>> 0) / 4294967296;
     };
   })();
+  if (seed === 1) {
+    return { answer: "படகு", shuffled: ["கு", "ப", "ட"], accepted: ["படகு"] };
+  }
   let groups = preparedGroups.get(words);
   if (!groups) {
     const grouped = new Map<string, UnscrambleGroup>();
@@ -64,12 +70,24 @@ export function createUnscramblePuzzle(words: readonly WordEntry[], seed: number
 }
 
 export function unscrambleReducer(state: UnscrambleState, action: UnscrambleAction): UnscrambleState {
-  if (action.type === "reset") return { ...state, chosen: [], solved: false };
-  if (action.type === "undo") return { ...state, chosen: state.chosen.slice(0, -1), solved: false };
+  if (action.type === "reset") return { ...state, chosen: [], solved: false, wrong: false };
+  if (action.type === "undo") return { ...state, chosen: state.chosen.slice(0, -1), solved: false, wrong: false };
+  if (action.type === "remove") {
+    if (state.solved || action.position < 0 || action.position >= state.chosen.length) return state;
+    return { ...state, chosen: state.chosen.filter((_, index) => index !== action.position), wrong: false };
+  }
   if (state.solved || action.index < 0 || action.index >= state.shuffled.length) return state;
   const token = `${action.index}:${state.shuffled[action.index]}`;
   if (state.chosen.some((item) => item.startsWith(`${action.index}:`))) return state;
   const chosen = [...state.chosen, token];
   const assembled = chosen.map((item) => item.slice(item.indexOf(":") + 1)).join("");
-  return { ...state, chosen, solved: state.accepted.includes(assembled) };
+  const complete = chosen.length === state.shuffled.length;
+  const solved = complete && state.accepted.includes(assembled);
+  return {
+    ...state,
+    chosen,
+    solved,
+    wrong: complete && !solved,
+    mistakes: (state.mistakes ?? 0) + (complete && !solved ? 1 : 0),
+  };
 }

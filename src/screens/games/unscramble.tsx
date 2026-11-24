@@ -1,13 +1,14 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { createUnscramblePuzzle, unscrambleReducer, parseTile, splitWord } from "../../engine";
+import { createUnscramblePuzzle, unscrambleReducer, parseTile } from "../../engine";
 import type { UnscrambleState } from "../../engine/unscramble";
 import { getWords } from "../../words";
 import type { WordEntry } from "../../words";
-import { colors, PalmLeafTile, spacing, typography } from "../../theme";
+import { CarvedSlot, colors, PalmLeafTile, spacing, typography } from "../../theme";
+import { getWordMeaning } from "../../content/word-meanings";
 import { GameFrame, ModeLoading, useModeProgress } from "./common";
 
-export function UnscrambleGame({ seed = 0, entries }: { seed?: number; entries?: WordEntry[] }) {
+export function UnscrambleGame({ seed = 0, entries, onComplete }: { seed?: number; entries?: WordEntry[]; onComplete?: () => void }) {
   const mode = "unscramble";
   const { stage, streak, advance, ready, error: progressError } = useModeProgress(mode);
   const [words, setWords] = React.useState<WordEntry[] | null>(entries ?? null);
@@ -30,38 +31,62 @@ export function UnscrambleGame({ seed = 0, entries }: { seed?: number; entries?:
     }
   }, [seed, stage, words]);
   const activeGame = game ?? generated.game;
+  React.useEffect(() => {
+    if (!activeGame?.wrong) return;
+    const timer = setTimeout(() => {
+      setGame((current) => current ? unscrambleReducer(current, { type: "reset" }) : current);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [activeGame?.wrong]);
   if (!ready) return <ModeLoading error={progressError} />;
   if (!activeGame) return <ModeLoading error={error ?? generated.error} />;
   const chosenIndexes = new Set(activeGame.chosen.map((item) => Number(item.slice(0, item.indexOf(":")))));
   const chosen = activeGame.chosen.map((item) => item.slice(item.indexOf(":") + 1));
+  const meaning = getWordMeaning(activeGame.answer);
   return (
-    <GameFrame mode={mode} stage={stage} streak={streak} solved={activeGame.solved} error={progressError} onNext={() => {
+    <GameFrame mode={mode} stage={stage} streak={streak} solved={activeGame.solved} error={progressError} onComplete={onComplete} onNext={() => {
       void advance().then((saved) => { if (saved) setGame(undefined); });
     }}>
       <Text style={styles.prompt}>அலகுகளைச் சரியான வரிசையில் தொடவும்</Text>
       <View style={styles.row}>
-        {chosen.map((tile, index) => <PalmLeafTile key={`${index}-${tile}`} tile={parseTile(tile)} size="small" />)}
+        {activeGame.shuffled.map((_, index) => {
+          const position = index < activeGame.chosen.length ? index : -1;
+          const tile = position >= 0 ? chosen[position] : undefined;
+          return (
+            <Pressable
+              key={`slot-${index}`}
+              accessibilityRole="button"
+              accessibilityLabel={tile ? `இடம் ${index + 1}, ${tile}` : `காலி இடம் ${index + 1}`}
+              testID={`unscramble-slot-${index}`}
+              onPress={() => {
+                if (position >= 0) setGame((current) => unscrambleReducer(current ?? activeGame, { type: "remove", position }));
+              }}
+            >
+              <CarvedSlot value={tile} />
+            </Pressable>
+          );
+        })}
       </View>
       <View style={styles.row}>
         {activeGame.shuffled.map((tile, index) => (
-          <Pressable
+          <PalmLeafTile
             key={`${index}-${tile}`}
-            accessibilityRole="button"
-            accessibilityLabel={`சொல் அலகு ${index + 1}`}
+            tile={parseTile(tile)}
+            size="small"
             testID={`unscramble-${index}`}
             disabled={chosenIndexes.has(index)}
-            onPress={() => {
-              setGame((current) => unscrambleReducer(current ?? activeGame, { type: "pick", index }));
-              if (activeGame.chosen.length + 1 === splitWord(activeGame.answer).length && !activeGame.solved) {
-                setTimeout(() => setGame((current) => unscrambleReducer(current ?? activeGame, { type: "reset" })), 600);
-              }
-            }}
-            style={{ opacity: chosenIndexes.has(index) ? 0.3 : 1 }}
-          >
-            <PalmLeafTile tile={parseTile(tile)} size="small" />
-          </Pressable>
+            onPress={() => setGame((current) => unscrambleReducer(current ?? activeGame, { type: "pick", index }))}
+          />
         ))}
       </View>
+      {activeGame.wrong ? <Text style={styles.wrong}>மீண்டும் முயற்சி செய்யுங்கள்</Text> : null}
+      {activeGame.solved ? (
+        <View style={styles.meaning}>
+          <Text style={styles.meaningTitle}>பொருள்</Text>
+          <Text style={styles.meaningText}>{meaning.meaning}</Text>
+          <Text style={styles.meaningText}>எடுத்துக்காட்டு: {meaning.example}</Text>
+        </View>
+      ) : null}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="கடைசி அலகை நீக்கு"
@@ -79,4 +104,8 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", minHeight: 78 },
   undo: { minHeight: 48, minWidth: 100, borderColor: colors.palmLeaf, borderWidth: 1, borderRadius: 8, justifyContent: "center", alignItems: "center" },
   undoText: { color: colors.sandalCream, fontSize: typography.label },
+  wrong: { color: colors.palmLeaf, fontSize: typography.body, marginTop: spacing.sm },
+  meaning: { backgroundColor: colors.palmLeaf, borderRadius: 8, padding: spacing.md, marginVertical: spacing.md, maxWidth: 380 },
+  meaningTitle: { color: colors.ink, fontSize: typography.body, fontWeight: "800" },
+  meaningText: { color: colors.ink, fontSize: typography.label, lineHeight: 26, marginTop: spacing.xs },
 });

@@ -11,11 +11,19 @@ function hash(value: string): number {
 
 export function getDailyPuzzles(dateStr: string): DailyMode[] {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) throw new Error("Daily date must use YYYY-MM-DD");
-  const alternate = hash(dateStr) % 2 === 0 ? "antaadhi" : "word-search";
+  const dayNumber = Number(dateStr.slice(-2));
+  const alternate = dayNumber % 2 === 0 ? "antaadhi" : "word-search";
   return ["word-build", "missing", "unscramble", "letter-lab", alternate];
 }
 
 export function getDailyDifficulty(dateStr: string): number {
   const day = new Date(`${dateStr}T00:00:00Z`).getUTCDay();
-  return day === 0 ? 5 : day;
+  return day === 0 ? 7 : day;
+}
+
+export function getDailySeed(dateStr: string, index: number): number {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr) || index < 0 || index > 4) {
+    throw new Error("Invalid daily puzzle date or index");
+  }
+  return hash(`${dateStr}:${index}`);
 }

@@ -5,17 +5,19 @@ import { colors, ScreenHeader, spacing, typography } from "../src/theme";
 
 const uyir = ["அ","ஆ","இ","ஈ","உ","ஊ","எ","ஏ","ஐ","ஒ","ஓ","ஔ"];
 const mei = ["க்","ச்","ட்","த்","ப்","ற்","ங்","ஞ்","ண்","ந்","ம்","ன்","ய்","ர்","ல்","வ்","ழ்","ள்"];
+const signs = ["", "ா", "ி", "ீ", "ு", "ூ", "ெ", "ே", "ை", "ொ", "ோ", "ௌ"];
+const uyirmei = "கசடதபறஙஞணநமனயரலவழள".split("").flatMap((base) => signs.map((sign) => `${base}${sign}`));
 
 export default function Tracing() {
-  const [tab, setTab] = React.useState<"uyir" | "mei">("uyir");
-  const letters = tab === "uyir" ? uyir : mei;
+  const [tab, setTab] = React.useState<"uyir" | "mei" | "uyirmei">("uyir");
+  const letters = tab === "uyir" ? uyir : tab === "mei" ? mei : uyirmei;
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.content}>
       <ScreenHeader title="எழுத்துப் பயிற்சி" />
       <View style={styles.tabs}>
-        {(["uyir","mei"] as const).map((value) => (
+        {(["uyir","mei","uyirmei"] as const).map((value) => (
           <Pressable key={value} onPress={() => setTab(value)} style={[styles.tab, tab === value && styles.active]}>
-            <Text style={styles.tabText}>{value === "uyir" ? "உயிர்" : "மெய்"}</Text>
+            <Text style={styles.tabText}>{value === "uyir" ? "உயிர்" : value === "mei" ? "மெய்" : "உயிர்மெய்"}</Text>
           </Pressable>
         ))}
       </View>

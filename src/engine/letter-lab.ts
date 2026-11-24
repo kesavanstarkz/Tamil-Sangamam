@@ -16,6 +16,8 @@ export type LetterLabQuestion =
 export interface LetterLabState {
   question: LetterLabQuestion;
   solved: boolean;
+  wrong?: boolean;
+  mistakes?: number;
 }
 
 export type LetterLabAction =
@@ -41,14 +43,18 @@ export function createClassifyQuestion(mei: string): LetterLabQuestion {
 }
 
 export function letterLabReducer(state: LetterLabState, action: LetterLabAction): LetterLabState {
-  if (action.type === "next") return { question: action.question, solved: false };
+  if (action.type === "next") return { question: action.question, solved: false, wrong: false };
   if (state.solved || state.question.kind !== "split") {
     if (action.type !== "answer-class" || state.solved || state.question.kind !== "classify") return state;
-    return { ...state, solved: action.category === state.question.category };
+    const solved = action.category === state.question.category;
+    return { ...state, solved, wrong: !solved, mistakes: (state.mistakes ?? 0) + (solved ? 0 : 1) };
   }
   if (action.type !== "answer-split") return state;
+  const solved = action.mei === state.question.mei && action.uyir === state.question.uyir;
   return {
     ...state,
-    solved: action.mei === state.question.mei && action.uyir === state.question.uyir,
+    solved,
+    wrong: !solved,
+    mistakes: (state.mistakes ?? 0) + (solved ? 0 : 1),
   };
 }

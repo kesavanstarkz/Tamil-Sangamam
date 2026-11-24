@@ -20,6 +20,8 @@ import { NATIVE_MEIS } from "./tamil";
 import type { WordEntry } from "../words/types";
 import { splitWord, toString } from "./tiles";
 import { setSyllableTable } from "../words/syllables";
+import type { WordSearchState } from "./word-search";
+import type { UnscrambleState } from "./unscramble";
 
 const words = wordbank.words as WordEntry[];
 setSyllableTable(wordbank.syllables);
@@ -100,6 +102,47 @@ describe("new puzzle mode generators and reducers", () => {
       expect(state.solved).toBe(true);
     }
     expect(categories).toHaveLength(3);
+    expect(new Set(["அ", "ஆ", "இ", "ஈ", "உ", "ஊ", "எ", "ஏ", "ஐ", "ஒ", "ஓ", "ஔ"]).size).toBe(12);
+  });
+
+  test("wrong missing-letter and unscramble answers remain recoverable", () => {
+    const missing = createMissingLetterPuzzle(words, 1);
+    const missingState = missingLetterReducer({ ...missing, selected: null, solved: false }, {
+      type: "choose",
+      syllable: missing.options.find((item) => item !== missing.answer)!,
+    });
+
+    expect(missingState.solved).toBe(false);
+    expect(missingState.mistakes).toBe(1);
+    expect(missingLetterReducer(missingState, { type: "choose", syllable: missing.answer }).solved).toBe(true);
+
+    const puzzle = createUnscramblePuzzle(words, 1);
+    let state: UnscrambleState = { ...puzzle, chosen: [], solved: false };
+    for (let index = 0; index < puzzle.shuffled.length; index += 1) {
+      state = unscrambleReducer(state, { type: "pick", index });
+    }
+    if (!state.solved) {
+      expect(state.wrong).toBe(true);
+      expect(state.mistakes).toBe(1);
+      state = unscrambleReducer(state, { type: "reset" });
+      expect(state.chosen).toHaveLength(0);
+    }
+  });
+
+  test("word-search accepts a straight selection in reverse", () => {
+    const puzzle = {
+      size: 3,
+      grid: [["அ", "ஆ", "இ"], ["உ", "ஊ", "எ"], ["ஏ", "ஐ", "ஒ"]],
+      keys: [["அ", "ஆ", "இ"], ["உ", "ஊ", "எ"], ["ஏ", "ஐ", "ஒ"]],
+      words: ["அஆஇ"],
+      paths: [[0, 1, 2]],
+    };
+    let state: WordSearchState = { puzzle, selection: [], found: [], solved: false };
+    state = wordSearchReducer(state, { type: "start", cell: 2 });
+    state = wordSearchReducer(state, { type: "extend", cell: 0 });
+    state = wordSearchReducer(state, { type: "release" });
+    expect(state.solved).toBe(true);
+    expect(state.found).toEqual([[0, 1, 2]]);
   });
 
   test.each(Array.from({ length: 200 }, (_, index) => index))(

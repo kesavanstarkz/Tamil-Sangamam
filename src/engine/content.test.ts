@@ -1,6 +1,9 @@
-import { getDailyPuzzles } from "./daily";
+import { getDailyDifficulty, getDailyPuzzles, getDailySeed } from "./daily";
 import { scoreTrace } from "./tracing";
 import { toTamilNumerals } from "../theme/numerals";
+import { TOPIC_WORDS, createTopicLevel } from "../content/topics";
+import { isLevelSolvable } from "./solver";
+import { splitWord } from "./tiles";
 
 test("Tamil numerals are positional", () => {
   expect(toTamilNumerals(0)).toBe("௦");
@@ -14,6 +17,20 @@ test("Tamil numerals are positional", () => {
 test("daily puzzles are deterministic", () => {
   expect(getDailyPuzzles("2026-11-24")).toEqual(getDailyPuzzles("2026-11-24"));
   expect(getDailyPuzzles("2026-11-24")).not.toEqual(getDailyPuzzles("2026-11-25"));
+  expect(getDailySeed("2026-11-24", 0)).not.toBe(getDailySeed("2026-11-25", 0));
+  expect(getDailyDifficulty("2026-11-23")).toBe(1);
+  expect(getDailyDifficulty("2026-11-29")).toBe(7);
+});
+
+test("all topic starter words form solver-valid Tamil pools", () => {
+  for (const topic of Object.keys(TOPIC_WORDS) as (keyof typeof TOPIC_WORDS)[]) {
+    const wordsForTopic: readonly string[] = TOPIC_WORDS[topic];
+    wordsForTopic.forEach((word, index) => {
+      const level = createTopicLevel(topic, index + 1);
+      expect(splitWord(word).map((tile) => tile.kind).length).toBeGreaterThan(0);
+      expect(isLevelSolvable(level)).toBe(true);
+    });
+  }
 });
 
 test("trace score thresholds", () => {

@@ -25,7 +25,10 @@ export type WordSearchAction =
   | { type: "release" }
   | { type: "clear" };
 
-const DIRECTIONS = [[0, 1], [1, 0], [1, 1]] as const;
+const DIRECTIONS = [
+  [0, 1], [0, -1], [1, 0], [-1, 0],
+  [1, 1], [-1, -1], [1, -1], [-1, 1],
+] as const;
 
 interface SearchWord {
   word: string;
@@ -69,7 +72,7 @@ function findPath(grid: (SearchCell | null)[][], entry: SearchWord): number[] | 
         for (let index = 0; index < cells.length; index += 1) {
           const nextRow = row + dr * index;
           const nextCol = col + dc * index;
-          if (nextRow >= size || nextCol >= size || grid[nextRow][nextCol] !== cells[index]) {
+          if (nextRow < 0 || nextCol < 0 || nextRow >= size || nextCol >= size || grid[nextRow][nextCol] !== cells[index]) {
             matches = false;
             break;
           }
@@ -92,12 +95,11 @@ function findAllGridWords(
     for (let col = 0; col < size; col += 1) {
       for (const [dr, dc] of DIRECTIONS) {
         const cells: SearchCell[] = [];
-        for (
-          let length = 1;
-          row + dr * (length - 1) < size && col + dc * (length - 1) < size;
-          length += 1
-        ) {
-          const cell = grid[row + dr * (length - 1)][col + dc * (length - 1)];
+        for (let length = 1; ; length += 1) {
+          const nextRow = row + dr * (length - 1);
+          const nextCol = col + dc * (length - 1);
+          if (nextRow < 0 || nextCol < 0 || nextRow >= size || nextCol >= size) break;
+          const cell = grid[nextRow][nextCol];
           if (cell === null) break;
           cells.push(cell);
           byLength.get(length)?.get(sequenceKey(cells))?.forEach((word) => found.add(word));
@@ -187,7 +189,7 @@ export function createWordSearchPuzzle(words: readonly WordEntry[], stage: numbe
         const cells = wordCells.map((_, index) => [row + dr * index, col + dc * index] as const);
         if (cells.some(
           ([r, c], index) =>
-            r >= size || c >= size || (keys[r][c] !== null && keys[r][c] !== wordCells[index]),
+          r < 0 || c < 0 || r >= size || c >= size || (keys[r][c] !== null && keys[r][c] !== wordCells[index]),
         )) continue;
         cells.forEach(([r, c], index) => {
           const key = wordCells[index];
@@ -242,6 +244,12 @@ export function isWordSearchSolved(puzzle: WordSearchPuzzle, selections: number[
   return puzzle.paths.every((path) => found.has(path.join(",")));
 }
 
+function pathsMatch(path: number[], selection: number[]): boolean {
+  if (path.length !== selection.length) return false;
+  const forward = path.every((cell, index) => cell === selection[index]);
+  return forward || path.every((cell, index) => cell === selection[path.length - index - 1]);
+}
+
 export function wordSearchReducer(state: WordSearchState, action: WordSearchAction): WordSearchState {
   if (action.type === "clear") return { ...state, selection: [] };
   if (action.type === "start") return { ...state, selection: [action.cell] };
@@ -260,14 +268,11 @@ export function wordSearchReducer(state: WordSearchState, action: WordSearchActi
     const isStraight = dr === 0 || dc === 0 || Math.abs(dr) === Math.abs(dc);
     if (!isStraight) return state;
     const length = Math.max(Math.abs(dr), Math.abs(dc)) + 1;
-    const line = Array.from({ length }, (_, index) =>
-      (sr + drSign * (dr === 0 ? 0 : index * (Math.abs(dr) / Math.max(Math.abs(dr), Math.abs(dc))))) * size
-      + (sc + dcSign * (dc === 0 ? 0 : index * (Math.abs(dc) / Math.max(Math.abs(dr), Math.abs(dc)))))
-    );
+    const line = Array.from({ length }, (_, index) => (sr + drSign * index) * size + sc + dcSign * index);
     return { ...state, selection: line };
   }
   if (state.selection.length < 2) return { ...state, selection: [] };
-  const found = state.puzzle.paths.find((path) => path.join(",") === state.selection.join(","));
+  const found = state.puzzle.paths.find((path) => pathsMatch(path, state.selection));
   if (!found || state.found.some((path) => path.join(",") === found.join(","))) {
     return { ...state, selection: [] };
   }

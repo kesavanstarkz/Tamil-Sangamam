@@ -1,6 +1,6 @@
 import React from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { colors, KolamBorder, LampGlow, ScreenHeader, spacing, typography } from "../../theme";
+import { colors, KolamBorder, LampGlow, ScreenHeader, spacing, typography, toTamilNumerals } from "../../theme";
 import { endlessProgressStore } from "../../state/endless";
 
 export type GameMode = "missing" | "unscramble" | "letter-lab" | "antaadhi" | "word-search";
@@ -16,6 +16,7 @@ export const MODE_TITLES: Record<GameMode, string> = {
 export function useModeProgress(mode: GameMode) {
   const [stage, setStage] = React.useState(1);
   const [streak, setStreak] = React.useState(0);
+  const [bestStreak, setBestStreak] = React.useState(0);
   const [ready, setReady] = React.useState(false);
   const [error, setError] = React.useState<string>();
 
@@ -25,6 +26,7 @@ export function useModeProgress(mode: GameMode) {
       .then((progress) => {
         if (!active) return;
         setStage(progress.stage);
+        setBestStreak(progress.bestStreak);
         setReady(true);
       })
       .catch((cause: unknown) => {
@@ -38,6 +40,7 @@ export function useModeProgress(mode: GameMode) {
     try {
       const progress = await endlessProgressStore.recordWin(mode, streak + 1);
       setStreak((current) => current + 1);
+      setBestStreak(progress.bestStreak);
       setStage(progress.stage);
       return true;
     } catch (cause) {
@@ -45,7 +48,7 @@ export function useModeProgress(mode: GameMode) {
       return false;
     }
   }, [mode, streak]);
-  return { stage, streak, advance, ready, error };
+  return { stage, streak, bestStreak, advance, ready, error };
 }
 
 export function GameFrame({
@@ -54,6 +57,7 @@ export function GameFrame({
   streak,
   solved,
   onNext,
+  onComplete,
   error,
   children,
 }: {
@@ -62,13 +66,20 @@ export function GameFrame({
   streak: number;
   solved: boolean;
   onNext: () => void;
+  onComplete?: () => void;
   error?: string;
   children: React.ReactNode;
 }) {
   return (
-    <ScrollView style={styles.page} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.page}
+      contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="always"
+      nestedScrollEnabled
+      scrollEnabled={mode !== "word-search"}
+    >
       <ScreenHeader title={MODE_TITLES[mode]} />
-      <Text style={styles.stage}>நிலை {stage}</Text>
+      <Text style={styles.stage}>நிலை {toTamilNumerals(stage)}</Text>
       {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
       {children}
       <LampGlow lit={solved && streak >= 2} />
@@ -76,9 +87,9 @@ export function GameFrame({
         <View style={styles.result}>
           <KolamBorder width={300} chapter={stage} />
           <Text accessibilityRole="alert" style={styles.success}>வெற்றி!</Text>
-          {streak >= 2 ? <Text style={styles.streak}>தொடர் வெற்றி · {streak + 1}</Text> : null}
-          <Pressable accessibilityRole="button" style={styles.next} onPress={onNext}>
-            <Text style={styles.nextText}>அடுத்த நிலை →</Text>
+          {streak >= 2 ? <Text style={styles.streak}>தொடர் வெற்றி — {toTamilNumerals(streak + 1)}</Text> : null}
+          <Pressable accessibilityRole="button" style={styles.next} onPress={onComplete ?? onNext}>
+            <Text style={styles.nextText}>{onComplete ? "அடுத்த சவால் →" : "அடுத்த நிலை →"}</Text>
           </Pressable>
         </View>
       ) : null}

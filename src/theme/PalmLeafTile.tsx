@@ -10,35 +10,44 @@ interface Props {
   selected?: boolean;
   highlighted?: boolean;
   onPress?: () => void;
+  accessibilityLabel?: string;
+  testID?: string;
+  disabled?: boolean;
   size?: "small" | "normal" | "kids";
 }
 
-export function PalmLeafTile({ tile, selected, highlighted, onPress, size = "normal" }: Props) {
-  const mark = tile.kind === "uyir" ? colors.turmeric : tile.kind === "mei" ? colors.kumkumRed : null;
+export function PalmLeafTile({ tile, selected, highlighted, onPress, accessibilityLabel, testID, disabled, size = "normal" }: Props) {
   const tileSize = size === "kids" ? 76 : size === "small" ? 54 : 64;
-
+  const tileStyle = [
+    styles.tile,
+    {
+      width: tileSize,
+      height: tileSize,
+      transform: [{ rotate: `${((Number(toString(tile).charCodeAt(0) % 3) - 1) * 1.2).toFixed(1)}deg` }],
+      borderWidth: tile.kind === "uyirmei" ? 2 : 1,
+      borderColor: tile.kind === "uyirmei" ? colors.turmeric : colors.ink,
+    },
+    selected && styles.selected,
+    highlighted && styles.highlighted,
+  ];
+  const content = (
+    <>
+      <View style={styles.hole} />
+      <Text style={[styles.text, size === "kids" && { fontSize: typography.word }]}>{toString(tile)}</Text>
+    </>
+  );
+  if (!onPress) return <View style={tileStyle}>{content}</View>;
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={toString(tile)}
+      accessibilityLabel={accessibilityLabel ?? toString(tile)}
+      testID={testID}
+      disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.tile,
-        {
-          width: tileSize,
-          height: tileSize,
-          transform: [{ rotate: `${((Number(toString(tile).charCodeAt(0) % 3) - 1) * 1.2).toFixed(1)}deg` }],
-          borderWidth: tile.kind === "uyirmei" ? 2 : 1,
-          borderColor: tile.kind === "uyirmei" ? colors.turmeric : colors.ink,
-          opacity: pressed ? 0.78 : 1,
-        },
-        selected && styles.selected,
-        highlighted && styles.highlighted,
-      ]}
+      hitSlop={6}
+      style={({ pressed }) => [tileStyle, pressed && styles.pressed, disabled && styles.disabled]}
     >
-      {mark ? <View style={[styles.mark, { backgroundColor: mark }]} /> : null}
-      <View style={styles.hole} />
-      <Text style={[styles.text, size === "kids" && { fontSize: typography.word }]}>{toString(tile)}</Text>
+      {content}
     </Pressable>
   );
 }
@@ -67,7 +76,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.ink,
   },
-  mark: { position: "absolute", right: 7, bottom: 7, width: 7, height: 7, borderRadius: 4 },
   selected: { borderColor: colors.sandalCream, borderWidth: 3 },
   highlighted: { borderColor: colors.lampAmber, borderWidth: 3 },
+  pressed: { opacity: 0.78 },
+  disabled: { opacity: 0.35 },
 });
